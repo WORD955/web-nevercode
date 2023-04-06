@@ -1,13 +1,13 @@
 {
-  "title": "ACME Storefront | Powered by Next.js Commerce",
-  "titleTemplate": "%s - ACME Storefront",
-  "description": "Next.js Commerce - https://www.nextjs.org/commerce",
+  "title": "Pro Style | Powered by NextCloud",
+  "titleTemplate": "%s - Pro Style",
+  "description": "Pro Style - https://www.nextjs.org/commerce",
   "openGraph": {
-    "title": "ACME Storefront | Powered by Next.js Commerce",
+    "title": "Pro Style | Powered by Next.js Commerce",
     "description": "Next.js Commerce - https://www.nextjs.org/commerce",
     "type": "website",
     "url": "https://nextjs.org/commerce",
-    "site_name": "Next.js Commerce",
+    "site_name": "Pro Style",
     "images": [
       {
         "url": "/card.png",
