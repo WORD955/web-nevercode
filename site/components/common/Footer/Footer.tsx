@@ -41,6 +41,10 @@ const links = [
     name: 'Refund Policy',
     url: '/refund',
   },
+  {
+    name: 'Contact Us',
+    url: '/contact',
+  },
 ]
 
 const Footer: FC<Props> = ({ className, pages }) => {
