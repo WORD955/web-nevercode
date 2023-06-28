@@ -1,5 +1,6 @@
 /**
  * This file is expected to be used in next.config.js only
+ * 
  */
 
 const path = require('path')
