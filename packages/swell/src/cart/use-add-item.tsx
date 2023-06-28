@@ -26,7 +26,6 @@ export const handler: MutationHook<AddItemHook> = {
     }
     const variables: {
       product_id: string | undefined
-      variant_id?: string
       checkoutId?: string
       quantity?: number
     } = {
@@ -34,10 +33,6 @@ export const handler: MutationHook<AddItemHook> = {
       product_id: item.productId,
       quantity: item.quantity,
     }
-    if (item.productId !== item.variantId && item.variantId !== undefined) {
-      variables.variant_id = item.variantId
-    }
-
     const response = await fetch({
       ...options,
       variables,
