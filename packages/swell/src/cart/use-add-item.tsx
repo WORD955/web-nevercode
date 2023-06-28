@@ -34,7 +34,7 @@ export const handler: MutationHook<AddItemHook> = {
       product_id: item.productId,
       quantity: item.quantity,
     }
-    if (item.productId !== item.variantId) {
+    if (item.productId !== item.variantId && item.variantId !== undefined) {
       variables.variant_id = item.variantId
     }
 
