@@ -32,9 +32,10 @@ export default function NotFound() {
       In order to resolve a complaint regarding the Site or to receive further information regarding use of the Site,
       please contact us at:
       <br/><br/>
-      <br/><br/>SoCloud Technology, Inc.
+      <br/><br/>SoCloud Technology Co., Limited
       <br/><br/>Phone: +1(715)6029693
       <br/><br/>michael@socloud.ltd
+      <br/><br/>Address: UNIT A3, 2/F., HING YIP CENTRE, NO.31, HING YIP STREET. KWUN TONG.
 
     </div>
   )

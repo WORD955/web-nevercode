@@ -32,7 +32,7 @@ export default function NotFound() {
       <Text variant='sectionHeading'>1. AGREEMENT TO TERMS</Text>
 
       These Terms of Use constitute a legally binding agreement made between you, whether personally or on behalf of an
-      entity (“you”) and SoCloud Technology, Inc., doing business as NextCloud ("NextCloud," “we," “us," or “our”),
+      entity (“you”) and SoCloud Technology Co., Limited, doing business as NextCloud ("NextCloud," “we," “us," or “our”),
       concerning your access to and use of the https://nevercode.net website as well as any other media form, media
       channel, mobile website or mobile application related, linked, or otherwise connected thereto (collectively, the
       “Site”). You agree that by accessing the Site, you have read, understood, and agreed to be bound by all of these
@@ -398,7 +398,7 @@ export default function NotFound() {
       In order to resolve a complaint regarding the Site or to receive further information regarding use of the Site,
       please contact us at:
       <br/><br/>
-      <br/><br/>SoCloud Technology, Inc.
+      <br/><br/>SoCloud Technology Co., Limited
       <br/><br/>Phone: +1(715)6029693
       <br/><br/>michael@socloud.ltd
 
