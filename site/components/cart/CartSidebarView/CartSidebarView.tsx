@@ -41,6 +41,7 @@ const CartSidebarView: FC = () => {
 
   const handlePaddleCheckout = async () => {
     try {
+      console.log('data', data)
       if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
         console.error('Paddle client token not found')
         return
@@ -65,10 +66,9 @@ const CartSidebarView: FC = () => {
         console.error('Failed to initialize Paddle')
         return
       }
-
       await paddle.Checkout.open({
         items: data?.lineItems.map((item: any) => ({
-          priceId: item.id, // Make sure this matches your Paddle price ID format
+          priceId: 'pri_01h7wrwrvxkzrpfn2hz1qav35b',
           quantity: item.quantity
         })) || [],
         customer: {
