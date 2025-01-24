@@ -70,10 +70,7 @@ const CartSidebarView: FC = () => {
         items: data?.lineItems.map((item: any) => ({
           priceId: 'pri_01h7wrwrvxkzrpfn2hz1qav35b',
           quantity: item.quantity
-        })) || [],
-        customer: {
-          email: '', // You might want to get this from your user context
-        }
+        })) || []
       })
     } catch (error) {
       console.error('Paddle checkout error:', error)
