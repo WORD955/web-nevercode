@@ -9,7 +9,7 @@ import { Bag, Cross, Check } from '@components/icons'
 import useCart from '@framework/cart/use-cart'
 import usePrice from '@framework/product/use-price'
 import SidebarLayout from '@components/common/SidebarLayout'
-import { Paddle } from '@paddle/paddle-js'
+import { initializePaddle } from '@paddle/paddle-js'
 
 const CartSidebarView: FC = () => {
   const { closeSidebar, setSidebarView } = useUI()
@@ -46,10 +46,25 @@ const CartSidebarView: FC = () => {
         return
       }
 
-      const paddle = new Paddle({
+      const paddle = await initializePaddle({
         token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
         environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+        version: 'v1',
+        checkout: {
+          settings: {
+            displayMode: 'inline',
+            theme: 'dark',
+            locale: 'en',
+            successUrl: `${window.location.origin}/order/success`,
+            frameTarget: '_self'
+          }
+        }
       })
+
+      if (!paddle) {
+        console.error('Failed to initialize Paddle')
+        return
+      }
 
       await paddle.Checkout.open({
         items: data?.lineItems.map((item: any) => ({
@@ -58,14 +73,7 @@ const CartSidebarView: FC = () => {
         })) || [],
         customer: {
           email: '', // You might want to get this from your user context
-        },
-        settings: {
-          displayMode: 'inline',
-          theme: 'dark',
-          locale: 'en',
-          successUrl: `${window.location.origin}/order/success`,
-          cancelUrl: `${window.location.origin}/cart`,
-        },
+        }
       })
     } catch (error) {
       console.error('Paddle checkout error:', error)
