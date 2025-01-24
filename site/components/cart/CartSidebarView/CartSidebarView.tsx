@@ -23,7 +23,7 @@ const PRICE_TO_PADDLE_ID: Record<number, string> = {
 }
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY!)
 
 const CartSidebarView: FC = () => {
   const { closeSidebar, setSidebarView } = useUI()
