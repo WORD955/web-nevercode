@@ -9,7 +9,17 @@ import { Bag, Cross, Check } from '@components/icons'
 import useCart from '@framework/cart/use-cart'
 import usePrice from '@framework/product/use-price'
 import SidebarLayout from '@components/common/SidebarLayout'
-import { initializePaddle } from '@paddle/paddle-js'
+import { initializePaddle, CheckoutOpenLineItem } from '@paddle/paddle-js'
+
+// Price to Paddle priceId mapping
+const PRICE_TO_PADDLE_ID: Record<number, string> = {
+  0.99: 'pri_01h7wt7r9nerhe1apjq6yats3f',
+  19.99: 'pri_01h7wrwtppv23hd6sn558m2h3f',
+  99.99: 'pri_01h7wrwrvxkzrpfn2hz1qav35b',
+  34.99: 'pri_01h7wrwq409mfe02eb1tazk6qm',
+  4.99: 'pri_01h7wrm7q8870k4nbdw4y0v18h',
+  9.99: 'pri_01h7wrjrwv2b0ccyg5mdxz3q1z'
+}
 
 const CartSidebarView: FC = () => {
   const { closeSidebar, setSidebarView } = useUI()
@@ -50,7 +60,6 @@ const CartSidebarView: FC = () => {
       const paddle = await initializePaddle({
         token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
         environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
-        version: 'v1',
         checkout: {
           settings: {
             displayMode: 'inline',
@@ -66,11 +75,22 @@ const CartSidebarView: FC = () => {
         console.error('Failed to initialize Paddle')
         return
       }
-      await paddle.Checkout.open({
-        items: data?.lineItems.map((item: any) => ({
-          priceId: 'pri_01h7wrwrvxkzrpfn2hz1qav35b',
+
+      const paddleItems = (data?.lineItems || []).reduce<CheckoutOpenLineItem[]>((acc, item: any) => {
+        const price = Number(item.variant.price)
+        const paddleId = PRICE_TO_PADDLE_ID[price]
+        if (!paddleId) {
+          console.error(`No Paddle priceId found for price: ${price}`)
+          return acc
+        }
+        return [...acc, {
+          priceId: paddleId,
           quantity: item.quantity
-        })) || []
+        }]
+      }, [])
+
+      await paddle.Checkout.open({
+        items: paddleItems
       })
     } catch (error) {
       console.error('Paddle checkout error:', error)
