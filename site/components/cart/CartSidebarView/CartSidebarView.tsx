@@ -10,6 +10,7 @@ import useCart from '@framework/cart/use-cart'
 import usePrice from '@framework/product/use-price'
 import SidebarLayout from '@components/common/SidebarLayout'
 import { initializePaddle, CheckoutOpenLineItem } from '@paddle/paddle-js'
+import { loadStripe } from '@stripe/stripe-js'
 
 // Price to Paddle priceId mapping
 const PRICE_TO_PADDLE_ID: Record<number, string> = {
@@ -20,6 +21,9 @@ const PRICE_TO_PADDLE_ID: Record<number, string> = {
   4.99: 'pri_01h7wrm7q8870k4nbdw4y0v18h',
   9.99: 'pri_01h7wrjrwv2b0ccyg5mdxz3q1z'
 }
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const CartSidebarView: FC = () => {
   const { closeSidebar, setSidebarView } = useUI()
@@ -41,11 +45,41 @@ const CartSidebarView: FC = () => {
   const handleClose = () => closeSidebar()
   const goToCheckout = () => setSidebarView('CHECKOUT_VIEW')
 
-  const handleStripeCheckout = () => {
-    if (process.env.COMMERCE_CUSTOMCHECKOUT_ENABLED) {
-      goToCheckout()
-    } else {
-      window.location.href = '/checkout'
+  const handleStripeCheckout = async () => {
+    try {
+      const stripe = await stripePromise
+      if (!stripe) {
+        console.error('Failed to load Stripe')
+        return
+      }
+
+      // Create a Stripe Checkout Session
+      const response = await fetch('/api/checkout/stripe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: data?.lineItems.map((item: any) => ({
+            price: item.variant.price,
+            quantity: item.quantity,
+            name: item.name || item.variant.name || 'Product'
+          }))
+        }),
+      })
+
+      const session = await response.json()
+
+      // Redirect to Stripe Checkout
+      const result = await stripe.redirectToCheckout({
+        sessionId: session.id,
+      })
+
+      if (result.error) {
+        console.error('Stripe checkout error:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to create checkout session:', error)
     }
   }
 
