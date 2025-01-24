@@ -62,11 +62,10 @@ const CartSidebarView: FC = () => {
         environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
         checkout: {
           settings: {
-            displayMode: 'inline',
+            displayMode: 'overlay',
             theme: 'dark',
             locale: 'en',
             successUrl: `${window.location.origin}/order/success`,
-            frameTarget: '_self'
           }
         }
       })
