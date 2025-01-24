@@ -1,4 +1,5 @@
 import type { GetStaticPropsContext } from 'next'
+import { useState } from 'react'
 import useCart from '@framework/cart/use-cart'
 import usePrice from '@framework/product/use-price'
 import commerce from '@lib/api/commerce'
@@ -7,6 +8,21 @@ import { Button, Text, Container } from '@components/ui'
 import { Bag, Cross, Check, MapPin, CreditCard } from '@components/icons'
 import { CartItem } from '@components/cart'
 import { useUI } from '@components/ui/context'
+import { loadStripe } from '@stripe/stripe-js'
+import { initializePaddle, CheckoutOpenLineItem } from '@paddle/paddle-js'
+
+// Price to Paddle priceId mapping
+const PRICE_TO_PADDLE_ID: Record<number, string> = {
+  0.99: 'pri_01h7wt7r9nerhe1apjq6yats3f',
+  19.99: 'pri_01h7wrwtppv23hd6sn558m2h3f',
+  99.99: 'pri_01h7wrwrvxkzrpfn2hz1qav35b',
+  34.99: 'pri_01h7wrwq409mfe02eb1tazk6qm',
+  4.99: 'pri_01h7wrm7q8870k4nbdw4y0v18h',
+  9.99: 'pri_01h7wrjrwv2b0ccyg5mdxz3q1z'
+}
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 export async function getStaticProps({
   preview,
@@ -28,6 +44,7 @@ export default function Cart() {
   const success = null
   const { data, isLoading, isEmpty } = useCart()
   const { openSidebar, setSidebarView } = useUI()
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false)
 
   const { price: subTotal } = usePrice(
     data && {
@@ -42,9 +59,88 @@ export default function Cart() {
     }
   )
 
-  const goToCheckout = () => {
-    openSidebar()
-    setSidebarView('CHECKOUT_VIEW')
+  const handleStripeCheckout = async () => {
+    try {
+      const stripe = await stripePromise
+      if (!stripe) {
+        console.error('Failed to load Stripe')
+        return
+      }
+
+      // Create a Stripe Checkout Session
+      const response = await fetch('/api/checkout/stripe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: data?.lineItems.map((item: any) => ({
+            price: item.variant.price,
+            quantity: item.quantity,
+            name: item.name || item.variant.name || 'Product'
+          }))
+        }),
+      })
+
+      const session = await response.json()
+
+      // Redirect to Stripe Checkout
+      const result = await stripe.redirectToCheckout({
+        sessionId: session.id,
+      })
+
+      if (result.error) {
+        console.error('Stripe checkout error:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to create checkout session:', error)
+    }
+  }
+
+  const handlePaddleCheckout = async () => {
+    try {
+      if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
+        console.error('Paddle client token not found')
+        return
+      }
+
+      const paddle = await initializePaddle({
+        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+        environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+        checkout: {
+          settings: {
+            displayMode: 'overlay',
+            theme: 'dark',
+            locale: 'en',
+            successUrl: `${window.location.origin}/order/success`,
+          }
+        }
+      })
+
+      if (!paddle) {
+        console.error('Failed to initialize Paddle')
+        return
+      }
+
+      const paddleItems = (data?.lineItems || []).reduce<CheckoutOpenLineItem[]>((acc, item: any) => {
+        const price = Number(item.variant.price)
+        const paddleId = PRICE_TO_PADDLE_ID[price]
+        if (!paddleId) {
+          console.error(`No Paddle priceId found for price: ${price}`)
+          return acc
+        }
+        return [...acc, {
+          priceId: paddleId,
+          quantity: item.quantity
+        }]
+      }, [])
+
+      await paddle.Checkout.open({
+        items: paddleItems
+      })
+    } catch (error) {
+      console.error('Paddle checkout error:', error)
+    }
   }
 
   return (
@@ -68,7 +164,7 @@ export default function Cart() {
               <Cross width={24} height={24} />
             </span>
             <h2 className="pt-6 text-xl font-light text-center">
-              We couldn’t process the purchase. Please check your card
+              We couldn't process the purchase. Please check your card
               information and try again.
             </h2>
           </div>
@@ -113,35 +209,6 @@ export default function Cart() {
       </div>
       <div className="lg:col-span-5">
         <div className="flex-shrink-0 px-4 py-24 sm:px-6">
-          {process.env.COMMERCE_CUSTOMCHECKOUT_ENABLED && (
-            <>
-              {/* Shipping Address */}
-              {/* Only available with customCheckout set to true - Meaning that the provider does offer checkout functionality. */}
-              <div className="rounded-md border border-accent-2 px-6 py-6 mb-4 text-center flex items-center justify-center cursor-pointer hover:border-accent-4">
-                <div className="mr-5">
-                  <MapPin />
-                </div>
-                <div className="text-sm text-center font-medium">
-                  <span className="uppercase">+ Add Shipping Address</span>
-                  {/* <span>
-                    1046 Kearny Street.<br/>
-                    San Franssisco, California
-                  </span> */}
-                </div>
-              </div>
-              {/* Payment Method */}
-              {/* Only available with customCheckout set to true - Meaning that the provider does offer checkout functionality. */}
-              <div className="rounded-md border border-accent-2 px-6 py-6 mb-4 text-center flex items-center justify-center cursor-pointer hover:border-accent-4">
-                <div className="mr-5">
-                  <CreditCard />
-                </div>
-                <div className="text-sm text-center font-medium">
-                  <span className="uppercase">+ Add Payment Method</span>
-                  {/* <span>VISA #### #### #### 2345</span> */}
-                </div>
-              </div>
-            </>
-          )}
           <div className="border-t border-accent-2">
             <ul className="py-3">
               <li className="flex justify-between py-1">
@@ -170,13 +237,21 @@ export default function Cart() {
                 </Button>
               ) : (
                 <>
-                  {process.env.COMMERCE_CUSTOMCHECKOUT_ENABLED ? (
-                    <Button Component="a" width="100%" onClick={goToCheckout}>
-                      Proceed to Checkout ({total})
-                    </Button>
+                  {showPaymentOptions ? (
+                    <div className="space-y-2">
+                      <Button width="100%" onClick={handleStripeCheckout}>
+                        Pay with Stripe ({total})
+                      </Button>
+                      <Button width="100%" onClick={handlePaddleCheckout} variant="flat">
+                        Pay with Paddle ({total})
+                      </Button>
+                      <Button width="100%" variant="slim" onClick={() => setShowPaymentOptions(false)}>
+                        Cancel
+                      </Button>
+                    </div>
                   ) : (
-                    <Button href="/checkout" Component="a" width="100%">
-                      Proceed to Checkout
+                    <Button width="100%" onClick={() => setShowPaymentOptions(true)}>
+                      Proceed to Checkout ({total})
                     </Button>
                   )}
                 </>
