@@ -1,6 +1,6 @@
 import cn from 'clsx'
 import Link from 'next/link'
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import s from './CartSidebarView.module.css'
 import CartItem from '../CartItem'
 import { Button, Text } from '@components/ui'
@@ -9,10 +9,12 @@ import { Bag, Cross, Check } from '@components/icons'
 import useCart from '@framework/cart/use-cart'
 import usePrice from '@framework/product/use-price'
 import SidebarLayout from '@components/common/SidebarLayout'
+import { Paddle } from '@paddle/paddle-js'
 
 const CartSidebarView: FC = () => {
   const { closeSidebar, setSidebarView } = useUI()
   const { data, isLoading, isEmpty } = useCart()
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false)
 
   const { price: subTotal } = usePrice(
     data && {
@@ -28,6 +30,47 @@ const CartSidebarView: FC = () => {
   )
   const handleClose = () => closeSidebar()
   const goToCheckout = () => setSidebarView('CHECKOUT_VIEW')
+
+  const handleStripeCheckout = () => {
+    if (process.env.COMMERCE_CUSTOMCHECKOUT_ENABLED) {
+      goToCheckout()
+    } else {
+      window.location.href = '/checkout'
+    }
+  }
+
+  const handlePaddleCheckout = async () => {
+    try {
+      if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
+        console.error('Paddle client token not found')
+        return
+      }
+
+      const paddle = new Paddle({
+        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+        environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+      })
+
+      await paddle.Checkout.open({
+        items: data?.lineItems.map((item: any) => ({
+          priceId: item.id, // Make sure this matches your Paddle price ID format
+          quantity: item.quantity
+        })) || [],
+        customer: {
+          email: '', // You might want to get this from your user context
+        },
+        settings: {
+          displayMode: 'inline',
+          theme: 'dark',
+          locale: 'en',
+          successUrl: `${window.location.origin}/order/success`,
+          cancelUrl: `${window.location.origin}/cart`,
+        },
+      })
+    } catch (error) {
+      console.error('Paddle checkout error:', error)
+    }
+  }
 
   const error = null
   const success = null
@@ -57,7 +100,7 @@ const CartSidebarView: FC = () => {
             <Cross width={24} height={24} />
           </span>
           <h2 className="pt-6 text-xl font-light text-center">
-            We couldn’t process the purchase. Please check your card information
+            We couldn't process the purchase. Please check your card information
             and try again.
           </h2>
         </div>
@@ -109,13 +152,21 @@ const CartSidebarView: FC = () => {
               <span>{total}</span>
             </div>
             <div>
-              {process.env.COMMERCE_CUSTOMCHECKOUT_ENABLED ? (
-                <Button Component="a" width="100%" onClick={goToCheckout}>
-                  Proceed to Checkout ({total})
-                </Button>
+              {showPaymentOptions ? (
+                <div className="space-y-2">
+                  <Button width="100%" onClick={handleStripeCheckout}>
+                    Pay with Stripe ({total})
+                  </Button>
+                  <Button width="100%" onClick={handlePaddleCheckout} variant="flat">
+                    Pay with Paddle ({total})
+                  </Button>
+                  <Button width="100%" variant="slim" onClick={() => setShowPaymentOptions(false)}>
+                    Cancel
+                  </Button>
+                </div>
               ) : (
-                <Button href="/checkout" Component="a" width="100%">
-                  Proceed to Checkout
+                <Button width="100%" onClick={() => setShowPaymentOptions(true)}>
+                  Proceed to Checkout ({total})
                 </Button>
               )}
             </div>
