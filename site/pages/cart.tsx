@@ -13,12 +13,12 @@ import { initializePaddle, CheckoutOpenLineItem } from '@paddle/paddle-js'
 
 // Price to Paddle priceId mapping
 const PRICE_TO_PADDLE_ID: Record<number, string> = {
-  0.99: 'pri_01h7wt7r9nerhe1apjq6yats3f',
-  19.99: 'pri_01h7wrwtppv23hd6sn558m2h3f',
-  99.99: 'pri_01h7wrwrvxkzrpfn2hz1qav35b',
-  34.99: 'pri_01h7wrwq409mfe02eb1tazk6qm',
-  4.99: 'pri_01h7wrm7q8870k4nbdw4y0v18h',
-  9.99: 'pri_01h7wrjrwv2b0ccyg5mdxz3q1z'
+  0.99: 'pri_01jjx74pe851g1r0x2ksjx4bc2',
+  4.99: 'pri_01jjx6t1jvww5ka8snd6qx0wwy',
+  9.99: 'pri_01jjx6vxazdfkfs3nh0ynvydpp',
+  19.99: 'pri_01jjx6x0ntvmr3e702hg12yjrb',
+  34.99: 'pri_01jjx6y0xfq53qr4hk2g8j1025',
+  99.99: 'pri_01jjx6z1meb192r3smcvzr55x5',
 }
 
 // Initialize Stripe
